@@ -181,6 +181,10 @@
       width: 100%;
       padding: 14px 18px;
       font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
 
     .primary {
@@ -381,23 +385,34 @@
       border-radius: 8px;
       background: #fffaf0;
       padding: 14px;
-      display: grid;
-      gap: 8px;
+    }
+
+    .wrong-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 36px;
     }
 
     .wrong-word {
       font-size: 22px;
       font-weight: 850;
       overflow-wrap: anywhere;
+      min-width: 0;
+    }
+
+    .wrong-article {
+      color: var(--good);
+      margin-right: 7px;
     }
 
     .wrong-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 14px;
       color: var(--muted);
       font-size: 14px;
       line-height: 1.45;
+      flex: 0 0 auto;
+      text-align: right;
     }
 
     .actions {
@@ -452,6 +467,10 @@
 
       .answer-btn {
         min-height: 62px;
+      }
+
+      .wrong-row {
+        align-items: flex-start;
       }
     }
   </style>
@@ -701,6 +720,22 @@
       if (answer.m) parts.push(LABELS.m);
       if (answer.f) parts.push(LABELS.f);
       return parts.length ? parts.join(" + ") : "未选择";
+    }
+
+    function isPluralQuestion(question) {
+      const pos = question.pos || "";
+      if (/m\.\s*\(singular\)\s*f\.\s*\(plural\)/i.test(pos)) {
+        return question.word !== question.baseWord;
+      }
+      return /\bpl\.?\b/i.test(pos);
+    }
+
+    function articleText(question) {
+      const isPlural = isPluralQuestion(question);
+      const parts = [];
+      if (question.answer.m) parts.push(isPlural ? "los" : "el");
+      if (question.answer.f) parts.push(isPlural ? "las" : "la");
+      return parts.join("/");
     }
 
     function currentQuestion() {
@@ -1061,13 +1096,14 @@
     }
 
     function renderWrong(result, { showSheet = false } = {}) {
+      const source = showSheet
+        ? `${escapeHtml(result.sheetName || result.question.id?.split("-")[0] || "")}${result.question.unit ? ` · ${escapeHtml(result.question.unit)}单元` : ""}`
+        : "";
       return `
         <div class="wrong-item">
-          <div class="wrong-word">${escapeHtml(result.question.word)}</div>
-          <div class="wrong-meta">
-            ${showSheet ? `<span>${escapeHtml(result.sheetName || result.question.id?.split("-")[0] || "")}${result.question.unit ? ` · ${escapeHtml(result.question.unit)}单元` : ""}</span>` : ""}
-            <span>你的选择：${answerToText(result.picked)}</span>
-            <span>正确答案：${answerToText(result.question.answer)}</span>
+          <div class="wrong-row">
+            <div class="wrong-word"><span class="wrong-article">${articleText(result.question)}</span> ${formatWord(result.question.word)}</div>
+            ${source ? `<div class="wrong-meta">${source}</div>` : ""}
           </div>
         </div>
       `;
