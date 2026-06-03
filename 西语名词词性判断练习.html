@@ -122,6 +122,35 @@
     .choice {
       padding: 12px 14px;
       font-weight: 700;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .choice > span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .choice-label {
+      display: block;
+    }
+
+    .choice-meta {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 750;
+      opacity: 0.72;
+    }
+
+    .choice-progress {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 5px;
+      width: var(--progress-width, 0%);
+      background: var(--accent-2);
+      transition: width 180ms ease;
     }
 
     .choice.active {
@@ -150,6 +179,21 @@
 
     .secondary {
       background: #fffaf0;
+    }
+
+    .home-btn {
+      width: 52px;
+      min-height: 52px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .home-btn svg {
+      width: 22px;
+      height: 22px;
+      display: block;
     }
 
     .quiz-head {
@@ -315,6 +359,13 @@
       gap: 10px;
     }
 
+    .start-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
     .empty {
       border: 1px dashed var(--line);
       border-radius: 8px;
@@ -338,7 +389,7 @@
         padding: 22px 16px;
       }
 
-      .segmented, .segmented.two, .answers, .quiz-actions, .summary-grid, .actions {
+      .segmented, .segmented.two, .answers, .quiz-actions, .summary-grid, .actions, .start-actions {
         grid-template-columns: 1fr;
       }
 
@@ -376,6 +427,7 @@
       selectedSheet: "现西1",
       order: "original",
       quiz: null,
+      sessions: {},
       selection: new Set()
     };
 
@@ -439,12 +491,19 @@
       return out;
     }
 
+    function persistCurrentSession() {
+      if (!state.quiz || state.quiz.redoMode !== "all") return;
+      state.sessions[state.quiz.sheet] = state.quiz;
+    }
+
     function serialize() {
+      persistCurrentSession();
       return JSON.stringify({
         view: state.view,
         selectedSheet: state.selectedSheet,
         order: state.order,
         quiz: state.quiz,
+        sessions: state.sessions,
         selection: [...state.selection]
       });
     }
@@ -461,10 +520,24 @@
         state.selectedSheet = saved.selectedSheet || "现西1";
         state.order = saved.order || "original";
         state.quiz = saved.quiz || null;
+        state.sessions = saved.sessions || {};
+        if (state.quiz?.sheet && state.quiz.redoMode === "all") {
+          state.sessions[state.quiz.sheet] = state.quiz;
+        }
         state.selection = new Set(saved.selection || []);
       } catch {
         localStorage.removeItem(STORE_KEY);
       }
+    }
+
+    function goHome() {
+      persistCurrentSession();
+      if (state.quiz?.sheet) state.selectedSheet = state.quiz.sheet;
+      state.view = "start";
+      state.quiz = null;
+      state.selection = new Set();
+      save();
+      render();
     }
 
     function resetToStart() {
@@ -502,6 +575,33 @@
           unsure: ARTICLE_LABELS.unsure[0]
         }
       };
+    }
+
+    function progressForSheet(sheetName) {
+      const total = questionsForSheet(sheetName).length;
+      const session = state.sessions[sheetName];
+      const done = session ? Math.min(session.results?.length || 0, total) : 0;
+      return { done, total, percent: total ? Math.round((done / total) * 100) : 0 };
+    }
+
+    function resumeSession(sheetName) {
+      const session = state.sessions[sheetName];
+      if (!session) return;
+      state.view = session.index >= session.questions.length ? "summary" : "quiz";
+      state.selectedSheet = sheetName;
+      state.order = session.order || state.order;
+      state.quiz = session;
+      state.selection = new Set();
+      save();
+      render();
+    }
+
+    function startDefaultAction() {
+      const progress = progressForSheet(state.selectedSheet);
+      if (state.sessions[state.selectedSheet] && progress.done > 0) {
+        return resumeSession(state.selectedSheet);
+      }
+      return startQuiz();
     }
 
     function startQuiz({ questions = null, sheet = state.selectedSheet, order = state.order, redoMode = "all" } = {}) {
@@ -595,8 +695,20 @@
       render();
     }
 
+    function homeIcon() {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11.5 12 4l9 7.5"></path>
+          <path d="M5.5 10.5V20h13v-9.5"></path>
+          <path d="M9.5 20v-6h5v6"></path>
+        </svg>
+      `;
+    }
+
     function renderStart() {
       const total = questionsForSheet(state.selectedSheet).length;
+      const selectedProgress = progressForSheet(state.selectedSheet);
+      const hasSession = !!state.sessions[state.selectedSheet] && selectedProgress.done > 0;
       root.innerHTML = `
         <div class="topline"><span>西班牙语名词</span><span>${total} 题</span></div>
         <h1>词性判断练习</h1>
@@ -605,7 +717,14 @@
         <div class="option-group">
           <div class="label">选择 sheet</div>
           <div class="segmented" role="group" aria-label="选择 sheet">
-            ${Object.keys(RAW_DATA).map(name => `<button class="choice ${state.selectedSheet === name ? "active" : ""}" data-sheet="${name}">${name}</button>`).join("")}
+            ${Object.keys(RAW_DATA).map(name => {
+              const progress = progressForSheet(name);
+              return `<button class="choice ${state.selectedSheet === name ? "active" : ""}" data-sheet="${name}" style="--progress-width:${progress.percent}%">
+                <span class="choice-label">${name}</span>
+                <span class="choice-meta">${progress.done}/${progress.total}</span>
+                <span class="choice-progress" aria-hidden="true"></span>
+              </button>`;
+            }).join("")}
           </div>
         </div>
 
@@ -617,7 +736,12 @@
           </div>
         </div>
 
-        <button class="primary" id="startBtn">开始</button>
+        ${hasSession ? `
+          <div class="start-actions">
+            <button class="secondary" id="restartBtn">从头开始</button>
+            <button class="primary" id="continueBtn">继续上次</button>
+          </div>
+        ` : `<button class="primary" id="startBtn">开始</button>`}
       `;
       root.querySelectorAll("[data-sheet]").forEach(btn => btn.addEventListener("click", () => {
         state.selectedSheet = btn.dataset.sheet;
@@ -629,7 +753,9 @@
         save();
         render();
       }));
-      document.getElementById("startBtn").addEventListener("click", () => startQuiz());
+      document.getElementById("startBtn")?.addEventListener("click", () => startQuiz());
+      document.getElementById("restartBtn")?.addEventListener("click", () => startQuiz());
+      document.getElementById("continueBtn")?.addEventListener("click", () => resumeSession(state.selectedSheet));
     }
 
     function renderQuiz() {
@@ -652,6 +778,7 @@
 
       root.innerHTML = `
         <div class="quiz-head">
+          <button class="secondary home-btn" id="homeAction" aria-label="回到首页" title="回到首页">${homeIcon()}</button>
           <div>
             <div class="topline" style="margin:0"><span>${state.quiz.sheet}</span><span>${state.quiz.order === "random" ? "随机" : "原序"}</span></div>
             <div class="bar" aria-hidden="true"><span style="width:${percent}%"></span></div>
@@ -676,6 +803,7 @@
       root.querySelectorAll("[data-answer]").forEach(btn => {
         btn.addEventListener("click", () => selectAnswer(btn.dataset.answer));
       });
+      document.getElementById("homeAction").addEventListener("click", goHome);
       document.getElementById("mainAction").addEventListener("click", () => {
         state.quiz.status === "feedback" ? nextQuestion() : submitAnswer();
       });
@@ -705,7 +833,10 @@
       const wrongs = results.filter(r => !r.correct);
       const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
       root.innerHTML = `
-        <div class="topline"><span>${state.selectedSheet}</span><span>完成</span></div>
+        <div class="quiz-head">
+          <button class="secondary home-btn" id="homeAction" aria-label="回到首页" title="回到首页">${homeIcon()}</button>
+          <div class="topline" style="margin:0; width:100%"><span>${state.selectedSheet}</span><span>完成</span></div>
+        </div>
         <h2>练习汇总</h2>
         <div class="summary-grid">
           <div class="stat"><strong>${accuracy}%</strong><span>正确率</span></div>
@@ -720,6 +851,7 @@
           <button class="secondary" id="changeSheet">换一个sheet</button>
         </div>
       `;
+      document.getElementById("homeAction").addEventListener("click", goHome);
       document.getElementById("redoWrong").addEventListener("click", startFromWrong);
       document.getElementById("redoSheet").addEventListener("click", () => startQuiz({ sheet: state.selectedSheet, order: state.order }));
       document.getElementById("changeSheet").addEventListener("click", resetToStart);
@@ -764,7 +896,7 @@
         event.preventDefault();
         return previousQuestion();
       }
-      if (state.view === "start") return startQuiz();
+      if (state.view === "start") return startDefaultAction();
       if (state.view !== "quiz") return;
       event.preventDefault();
       state.quiz.status === "feedback" ? nextQuestion() : submitAnswer();
