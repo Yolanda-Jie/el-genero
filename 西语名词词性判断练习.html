@@ -244,6 +244,17 @@
     .feedback.ok { color: var(--good); }
     .feedback.no { color: var(--bad-border); }
 
+    .quiz-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .quiz-actions .primary {
+      margin-top: 0;
+    }
+
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -327,7 +338,7 @@
         padding: 22px 16px;
       }
 
-      .segmented, .segmented.two, .answers, .summary-grid, .actions {
+      .segmented, .segmented.two, .answers, .quiz-actions, .summary-grid, .actions {
         grid-template-columns: 1fr;
       }
 
@@ -569,6 +580,21 @@
       render();
     }
 
+    function canGoPreviousQuestion() {
+      return state.view === "quiz" && state.quiz && state.quiz.index > 0;
+    }
+
+    function previousQuestion() {
+      if (!canGoPreviousQuestion()) return;
+      const previousIndex = state.quiz.index - 1;
+      state.quiz.index = previousIndex;
+      state.quiz.results = state.quiz.results.slice(0, previousIndex);
+      state.quiz.status = "answer";
+      state.selection = new Set();
+      save();
+      render();
+    }
+
     function renderStart() {
       const total = questionsForSheet(state.selectedSheet).length;
       root.innerHTML = `
@@ -641,7 +667,10 @@
           ${answerButton("unsure", q, last)}
         </div>
         <div class="feedback ${state.quiz.status === "feedback" ? (last.correct ? "ok" : "no") : ""}">${feedback}</div>
-        <button class="primary" id="mainAction" ${state.quiz.status === "answer" && !isSelectionComplete() ? "disabled" : ""}>${state.quiz.status === "feedback" ? "下一题" : "确认"}</button>
+        <div class="quiz-actions">
+          <button class="secondary" id="previousAction" ${canGoPreviousQuestion() ? "" : "disabled"}>上一题</button>
+          <button class="primary" id="mainAction" ${state.quiz.status === "answer" && !isSelectionComplete() ? "disabled" : ""}>${state.quiz.status === "feedback" ? "下一题" : "确认"}</button>
+        </div>
       `;
 
       root.querySelectorAll("[data-answer]").forEach(btn => {
@@ -650,6 +679,7 @@
       document.getElementById("mainAction").addEventListener("click", () => {
         state.quiz.status === "feedback" ? nextQuestion() : submitAnswer();
       });
+      document.getElementById("previousAction").addEventListener("click", previousQuestion);
     }
 
     function answerButton(key, question, result) {
@@ -730,6 +760,10 @@
         return selectAnswer(shortcutMap[event.key]);
       }
       if (event.key !== "Enter") return;
+      if (event.shiftKey) {
+        event.preventDefault();
+        return previousQuestion();
+      }
       if (state.view === "start") return startQuiz();
       if (state.view !== "quiz") return;
       event.preventDefault();
