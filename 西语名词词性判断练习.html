@@ -247,9 +247,25 @@
 
     .answer-btn {
       min-height: 70px;
-      padding: 12px 10px;
+      padding: 18px 14px 14px;
       font-weight: 850;
       font-size: clamp(16px, 2.4vw, 19px);
+      position: relative;
+    }
+
+    .answer-shortcut {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .answer-label {
+      display: block;
+      text-align: center;
     }
 
     .answer-btn.selected {
@@ -271,6 +287,11 @@
       background: var(--bad);
       border-color: var(--bad-border);
       color: var(--ink);
+    }
+
+    .answer-btn.selected .answer-shortcut,
+    .answer-btn.correct .answer-shortcut {
+      color: rgba(255, 255, 255, 0.72);
     }
 
     .answer-btn:disabled {
@@ -850,7 +871,10 @@
       }
       const shortcuts = { m: "1", f: "2", unsure: "3" };
       const label = question.articleLabels?.[key] || LABELS[key];
-      return `<button class="${cls}" data-answer="${key}" ${isFeedback ? "disabled" : ""}>${shortcuts[key]} ${label}</button>`;
+      return `<button class="${cls}" data-answer="${key}" ${isFeedback ? "disabled" : ""}>
+        <span class="answer-shortcut">${shortcuts[key]}</span>
+        <span class="answer-label">${label}</span>
+      </button>`;
     }
 
     function renderSummary() {
