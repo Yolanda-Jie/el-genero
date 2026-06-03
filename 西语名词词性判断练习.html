@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>西语名词词性判断练习</title>
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --panel: #fffdf8;
+      --ink: #23211d;
+      --muted: #746f66;
+      --line: #ddd5c7;
+      --accent: #2f6f73;
+      --accent-2: #d98947;
+      --selected: #244b5a;
+      --good: #2f8f5b;
+      --bad: rgba(197, 62, 59, 0.3);
+      --bad-border: #c53e3b;
+      --shadow: 0 18px 45px rgba(35, 33, 29, 0.12);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(47, 111, 115, 0.13), transparent 34%),
+        linear-gradient(315deg, rgba(217, 137, 71, 0.14), transparent 34%),
+        var(--bg);
+    }
+
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 28px 18px;
+      display: grid;
+      place-items: center;
+    }
+
+    .screen {
+      width: min(720px, 100%);
+      background: rgba(255, 253, 248, 0.92);
+      border: 1px solid rgba(221, 213, 199, 0.95);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 5vw, 42px);
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 26px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    h1, h2 {
+      margin: 0;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(30px, 8vw, 58px);
+      max-width: 10ch;
+    }
+
+    h2 {
+      font-size: clamp(26px, 6vw, 40px);
+    }
+
+    .lead {
+      margin: 16px 0 30px;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 18px);
+      line-height: 1.65;
+    }
+
+    .option-group {
+      margin: 22px 0;
+    }
+
+    .label {
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-weight: 650;
+      font-size: 15px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .segmented.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .choice, .answer-btn, .primary, .secondary {
+      min-height: 52px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fffaf0;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease, opacity 150ms ease;
+    }
+
+    .choice {
+      padding: 12px 14px;
+      font-weight: 700;
+    }
+
+    .choice.active {
+      background: var(--selected);
+      border-color: var(--selected);
+      color: #fff;
+    }
+
+    .primary, .secondary {
+      width: 100%;
+      padding: 14px 18px;
+      font-weight: 800;
+    }
+
+    .primary {
+      margin-top: 12px;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .primary:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .secondary {
+      background: #fffaf0;
+    }
+
+    .quiz-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .progress {
+      color: var(--muted);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .bar {
+      height: 8px;
+      width: 100%;
+      background: #ede4d5;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 180ms ease;
+    }
+
+    .word {
+      min-height: 128px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: clamp(42px, 12vw, 88px);
+      font-weight: 850;
+      line-height: 1;
+      overflow-wrap: anywhere;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 34px 0 18px;
+    }
+
+    .answer-btn {
+      min-height: 70px;
+      padding: 12px 10px;
+      font-weight: 850;
+      font-size: clamp(16px, 2.4vw, 19px);
+    }
+
+    .answer-btn.selected {
+      background: var(--selected);
+      border-color: var(--selected);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .answer-btn.correct {
+      background: var(--good);
+      border-color: var(--good);
+      color: #fff;
+      transform: scale(1.055);
+      box-shadow: 0 12px 24px rgba(47, 143, 91, 0.22);
+    }
+
+    .answer-btn.wrong {
+      background: var(--bad);
+      border-color: var(--bad-border);
+      color: var(--ink);
+    }
+
+    .answer-btn:disabled {
+      cursor: default;
+    }
+
+    .feedback {
+      min-height: 28px;
+      margin: 6px 0 12px;
+      color: var(--muted);
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .feedback.ok { color: var(--good); }
+    .feedback.no { color: var(--bad-border); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 24px 0 22px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fffaf0;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(26px, 5vw, 38px);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .wrong-list {
+      display: grid;
+      gap: 10px;
+      max-height: min(46vh, 420px);
+      overflow: auto;
+      padding-right: 4px;
+      margin: 18px 0 24px;
+    }
+
+    .wrong-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .wrong-word {
+      font-size: 22px;
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    .wrong-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255, 250, 240, 0.7);
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 12px;
+        align-items: stretch;
+      }
+
+      .screen {
+        min-height: calc(100vh - 24px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 22px 16px;
+      }
+
+      .segmented, .segmented.two, .answers, .summary-grid, .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .quiz-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .word {
+        min-height: 112px;
+      }
+
+      .answer-btn {
+        min-height: 62px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="root" class="screen" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const RAW_DATA = {"现西1":[{"word":"aceite","pos":"m.","zh":"油","unit":"10"},{"word":"agua mineral","pos":"f.","zh":"矿泉水","unit":"5"},{"word":"alemán","pos":"m.","zh":"德语","unit":"2"},{"word":"animal","pos":"m.","zh":"动物","unit":"12"},{"word":"arroz","pos":"m.","zh":"水稻，大米，米饭","unit":"10"},{"word":"ascensor","pos":"m.","zh":"电梯","unit":"9"},{"word":"autobús","pos":"m.","zh":"公共汽车","unit":"3"},{"word":"avión","pos":"m.","zh":"飞机","unit":"14"},{"word":"calle","pos":"f.","zh":"街道","unit":"11"},{"word":"campus","pos":"m.","zh":"大学校园","unit":"4"},{"word":"carne","pos":"f.","zh":"肉","unit":"5"},{"word":"celular","pos":"m.","zh":"手机(拉美)","unit":"9"},{"word":"clase","pos":"f.","zh":"（一节）课","unit":"2"},{"word":"cliente","pos":"m.;f.","zh":"顾客","unit":"9"},{"word":"color","pos":"m.","zh":"颜色","unit":"8"},{"word":"comedor","pos":"m.","zh":"饭厅，食堂","unit":"4"},{"word":"costumbre","pos":"f.","zh":"习惯，习俗","unit":"14"},{"word":"cumpleaños","pos":"m.(el,los).","zh":"生日","unit":"5"},{"word":"deporte","pos":"m.","zh":"运动","unit":"4"},{"word":"desorden","pos":"m.","zh":"无秩序","unit":"6"},{"word":"diente","pos":"m.","zh":"牙","unit":"3"},{"word":"equipaje","pos":"m.","zh":"行李","unit":"8"},{"word":"estudiante","pos":"m.;f.","zh":"学生","unit":"1"},{"word":"familiar","pos":"m.","zh":"家人","unit":"13"},{"word":"fin","pos":"m.","zh":"结尾","unit":"15"},{"word":"frase","pos":"f.","zh":"句子","unit":"16"},{"word":"gen","pos":"m.","zh":"基因","unit":"13"},{"word":"gerente","pos":"m.;f.","zh":"经理","unit":"9"},{"word":"hambre","pos":"f.","zh":"饥饿","unit":"6"},{"word":"hispanohablante","pos":"m.;f.","zh":"以西班牙语为母语的人","unit":"2"},{"word":"hombre","pos":"m.","zh":"男人","unit":"2"},{"word":"hospital","pos":"m.","zh":"医院","unit":"3"},{"word":"hotel","pos":"m.","zh":"饭店，宾馆","unit":"8"},{"word":"mes","pos":"m.","zh":"月","unit":"11"},{"word":"mostrador","pos":"m.","zh":"柜台","unit":"8"},{"word":"móvil","pos":"m.","zh":"手机（西班牙）","unit":"9"},{"word":"mujer","pos":"f.","zh":"女人","unit":"2"},{"word":"nombre","pos":"m.","zh":"名字","unit":"15"},{"word":"observar","pos":"m.","zh":"观察","unit":"12"},{"word":"olor","pos":"m.","zh":"气味","unit":"16"},{"word":"ordenador","pos":"m.","zh":"电脑","unit":"7"},{"word":"padre","pos":"m.","zh":"父亲","unit":"3"},{"word":"país","pos":"m.","zh":"国家","unit":"2"},{"word":"paisaje","pos":"m.","zh":"风景","unit":"14"},{"word":"pan","pos":"m.","zh":"面包","unit":"16"},{"word":"mes","pos":"m.","zh":"月","unit":"11"},{"word":"mostrador","pos":"m.","zh":"柜台","unit":"8"},{"word":"móvil","pos":"m.","zh":"手机（西班牙）","unit":"9"},{"word":"mujer","pos":"f.","zh":"女人","unit":"2"},{"word":"nombre","pos":"m.","zh":"名字","unit":"15"},{"word":"observar","pos":"m.","zh":"观察","unit":"12"},{"word":"olor","pos":"m.","zh":"气味","unit":"16"},{"word":"ordenador","pos":"m.","zh":"电脑","unit":"7"},{"word":"padre","pos":"m.","zh":"父亲","unit":"3"},{"word":"país","pos":"m.","zh":"国家","unit":"2"},{"word":"paisaje","pos":"m.","zh":"风景","unit":"14"},{"word":"pan","pos":"m.","zh":"面包","unit":"16"},{"word":"papel","pos":"m.","zh":"纸","unit":"7"},{"word":"paquete","pos":"m.","zh":"包裹","unit":"8"},{"word":"par","pos":"m.","zh":"双，对","unit":"10"},{"word":"pariente","pos":"m..f.","zh":"亲戚","unit":"13"},{"word":"parque","pos":"m.","zh":"公园","unit":"12"},{"word":"perdón","pos":"m.","zh":"对不起，抱歉","unit":"7"},{"word":"personal","pos":"m.","zh":"人员","unit":"13"},{"word":"placer","pos":"m.","zh":"荣幸，高兴","unit":"5"},{"word":"postal","pos":"f.","zh":"明信片","unit":"14"},{"word":"postre","pos":"m.","zh":"甜点","unit":"5"},{"word":"practicante","pos":"m..f.","zh":"实践者","unit":"13"},{"word":"probador","pos":"m.","zh":"试衣间","unit":"10"},{"word":"inconveniente","pos":"m.","zh":"不便","unit":"13"},{"word":"inglés","pos":"m.","zh":"英语","unit":"3"},{"word":"interés","pos":"m.","zh":"兴趣","unit":"11"},{"word":"Internet","pos":"f.","zh":"因特网","unit":"7"},{"word":"jardín","pos":"m.","zh":"花园","unit":"11"},{"word":"jersey","pos":"m.","zh":"毛衣（西班牙）","unit":"10"},{"word":"joven","pos":"m.,f.","zh":"青年人","unit":"1"},{"word":"juguete","pos":"m.","zh":"玩具","unit":"8"},{"word":"leche","pos":"f.","zh":"奶","unit":"10"},{"word":"lugar","pos":"m.","zh":"地方","unit":"11"},{"word":"madre","pos":"f.","zh":"母亲","unit":"3"},{"word":"maletín","pos":"m.","zh":"手提包","unit":"8"},{"word":"razón","pos":"f.","zh":"道理","unit":"11"},{"word":"restaurante","pos":"m.","zh":"饭馆","unit":"5"},{"word":"roble","pos":"m.","zh":"栎树","unit":"13"},{"word":"sabor","pos":"m.","zh":"味道","unit":"16"},{"word":"sed","pos":"f.","zh":"渴","unit":"6"},{"word":"semestre","pos":"m.","zh":"学期","unit":"15"},{"word":"suerte","pos":"f.","zh":"运气","unit":"14"},{"word":"suéter","pos":"m.","zh":"毛衣（拉美）","unit":"10"},{"word":"tarde","pos":"f.","zh":"下午","unit":"2"},{"word":"taxi","pos":"m.","zh":"出租车","unit":"9"},{"word":"televisor","pos":"m.","zh":"电视机","unit":"11"},{"word":"vez","pos":"f.","zh":"次数","unit":"7"},{"word":"viaje","pos":"m.","zh":"旅行","unit":"8"},{"word":"visitante","pos":"m..f.","zh":"访问者","unit":"13"},{"word":"volumen","pos":"m.","zh":"体积；音量","unit":"11"},{"word":"voz","pos":"f.","zh":"声音","unit":"13"},{"word":"yogur","pos":"m.","zh":"酸奶","unit":"10"}],"现西2":[{"word":"abril","pos":"m.","zh":"四月","unit":"1"},{"word":"accidente","pos":"m.","zh":"事故","unit":"3"},{"word":"almanaque","pos":"m.","zh":"历书","unit":"8"},{"word":"alquiler","pos":"m.","zh":"房租","unit":"4"},{"word":"alrededor","pos":"m.","zh":"四周","unit":"14"},{"word":"ambiente","pos":"m.","zh":"气氛，氛围","unit":"4"},{"word":"andén","pos":"m.","zh":"站台","unit":"3"},{"word":"aparador","pos":"m.","zh":"餐具柜","unit":"12"},{"word":"aprendizaje","pos":"m.","zh":"学习","unit":"11"},{"word":"apunte","pos":"m.","zh":"笔记","unit":"2"},{"word":"árbol","pos":"m.","zh":"树","unit":"7"},{"word":"arroz","pos":"m.","zh":"稻子，大米，米饭","unit":"4"},{"word":"ataque","pos":"m.","zh":"攻击","unit":"13"},{"word":"atardecer","pos":"intr.;m.","zh":"黄昏降临；黄昏","unit":"4"},{"word":"aterrizaje","pos":"m.","zh":"着陆","unit":"9"},{"word":"avance","pos":"m.","zh":"前进","unit":"3"},{"word":"baile","pos":"m.","zh":"舞蹈","unit":"6"},{"word":"billete","pos":"m.(Esp.)","zh":"票（西班牙）","unit":"9"},{"word":"bosque","pos":"m.","zh":"森林","unit":"4"},{"word":"buzón","pos":"m.","zh":"信箱，邮箱","unit":"11"},{"word":"calentador","pos":"m.","zh":"热水器","unit":"12"},{"word":"calor","pos":"m.","zh":"热","unit":"5"},{"word":"cantante","pos":"m.;f.","zh":"歌唱家，歌手","unit":"10"},{"word":"catástrofe","pos":"f.","zh":"灾难","unit":"8"},{"word":"chiste","pos":"m.","zh":"笑话","unit":"4"},{"word":"cine","pos":"m.","zh":"电影；影院","unit":"2"},{"word":"cobrador","pos":"m.","zh":"收款员","unit":"12"},{"word":"coche","pos":"m.(Esp.)","zh":"轿车（西班牙）","unit":"3"},{"word":"comerciante","pos":"m..f.","zh":"商人","unit":"10"},{"word":"conserje","pos":"m..f.","zh":"守门人，门房","unit":"12"},{"word":"continente","pos":"m.","zh":"大陆","unit":"15"},{"word":"corte","pos":"f.","zh":"宫廷","unit":"15"},{"word":"despegue","pos":"m.","zh":"起飞","unit":"9"},{"word":"diciembre","pos":"m.","zh":"十二月","unit":"2"},{"word":"dolor","pos":"m.","zh":"疼痛","unit":"5"},{"word":"embarque","pos":"m.","zh":"登机","unit":"9"},{"word":"enchufe","pos":"m.","zh":"插销","unit":"12"},{"word":"especie","pos":"f.","zh":"种类","unit":"4"},{"word":"espíritu","pos":"m.","zh":"精神","unit":"10"},{"word":"exactitud","pos":"f.","zh":"准确性","unit":"13"},{"word":"examen","pos":"m.","zh":"考试","unit":"1"},{"word":"factor","pos":"m.","zh":"要素，因素","unit":"16"},{"word":"fiebre","pos":"f.","zh":"发烧","unit":"5"},{"word":"final","pos":"m.","zh":"末期","unit":"15"},{"word":"folklore","pos":"m.","zh":"民俗，民间艺术","unit":"6"},{"word":"frente","pos":"f.","zh":"前额","unit":"3"},{"word":"fuente","pos":"f.","zh":"泉，喷泉","unit":"4"},{"word":"fútbol","pos":"m.","zh":"足球","unit":"5"},{"word":"garaje","pos":"m.","zh":"车库","unit":"3"},{"word":"gas","pos":"m.","zh":"瓦斯，煤气","unit":"12"},{"word":"gestión","pos":"f.","zh":"办理（各种事务）","unit":"9"},{"word":"golpe","pos":"m.","zh":"打击","unit":"13"},{"word":"habitante","pos":"m.","zh":"居民","unit":"12"},{"word":"hablante","pos":"m..f.","zh":"说话人","unit":"16"},{"word":"honor","pos":"m.","zh":"荣幸","unit":"7"},{"word":"hostal","pos":"m.","zh":"客店","unit":"4"},{"word":"indigestión","pos":"f.","zh":"消化不良","unit":"5"},{"word":"índole","pos":"f.","zh":"性质","unit":"2"},{"word":"inmigrante","pos":"m.,f.","zh":"迁入移民","unit":"12"},{"word":"insensatez","pos":"f.","zh":"不明智","unit":"8"},{"word":"interés","pos":"m.","zh":"兴趣；利益","unit":"7"},{"word":"intérprete","pos":"m.,f.","zh":"口译员","unit":"10"},{"word":"jade","pos":"m.","zh":"玉","unit":"15"},{"word":"jueves","pos":"m.","zh":"星期四","unit":"1"},{"word":"labor","pos":"f.","zh":"工作，活儿","unit":"1"},{"word":"latín vulgar","pos":"m.","zh":"通俗（民间）拉丁语","unit":"16"},{"word":"lunes","pos":"m.","zh":"星期一","unit":"1"},{"word":"luz","pos":"f.","zh":"光，灯","unit":"6"},{"word":"maíz","pos":"m.","zh":"玉米","unit":"4"},{"word":"mal","pos":"m.","zh":"疾病；不舒服","unit":"5"},{"word":"martes","pos":"m.","zh":"星期二","unit":"1"},{"word":"mente","pos":"f.","zh":"头脑，心智","unit":"8"},{"word":"miércoles","pos":"m.","zh":"星期三","unit":"1"},{"word":"millón","pos":"m.","zh":"百万","unit":"16"},{"word":"muchedumbre","pos":"f.","zh":"一大堆（人/物）","unit":"13"},{"word":"muerte","pos":"f.","zh":"死亡","unit":"8"},{"word":"multitud","pos":"f.","zh":"群，大量","unit":"16"},{"word":"nariz","pos":"f.","zh":"鼻子","unit":"5"},{"word":"navegante","pos":"m.;f.","zh":"航海者","unit":"15"},{"word":"nivel","pos":"m.","zh":"水平","unit":"2"},{"word":"noviembre","pos":"m.","zh":"十一月","unit":"1"},{"word":"Occidente","pos":"m.","zh":"西方","unit":"15"},{"word":"octubre","pos":"m.","zh":"十月","unit":"2"},{"word":"orden","pos":"m.","zh":"秩序","unit":"13"},{"word":"oriente","pos":"m.","zh":"东方","unit":"15"},{"word":"origen","pos":"m.","zh":"起源","unit":"16"},{"word":"pasaje","pos":"m.(Amer.)","zh":"票（拉美）","unit":"9"},{"word":"personaje","pos":"m.","zh":"人物","unit":"8"},{"word":"plan","pos":"m.","zh":"计划","unit":"15"},{"word":"plumaje","pos":"m.","zh":"羽毛","unit":"7"},{"word":"poblador","pos":"m.","zh":"居民，住户","unit":"12"},{"word":"poder","pos":"m.","zh":"权力，国力","unit":"8"},{"word":"príncipe","pos":"m.","zh":"王子","unit":"14"},{"word":"rapidez","pos":"f.","zh":"快，迅速","unit":"1"},{"word":"recital","pos":"m.","zh":"朗诵会，（独奏，独唱）音乐会","unit":"2"},{"word":"redondez","pos":"f.","zh":"圆形","unit":"15"},{"word":"región","pos":"f.","zh":"地区，区域","unit":"16"},{"word":"religión","pos":"f.","zh":"宗教","unit":"8"},{"word":"remitente","pos":"m.,f.","zh":"发信人","unit":"11"},{"word":"reunión","pos":"f.","zh":"会议","unit":"9"},{"word":"rey","pos":"m.","zh":"国王","unit":"14"},{"word":"rock","pos":"m.","zh":"摇滚乐","unit":"12"},{"word":"sector","pos":"m.","zh":"部分","unit":"12"},{"word":"señal","pos":"f.","zh":"记号；迹象","unit":"7"},{"word":"septiembre","pos":"m.","zh":"九月","unit":"2"},{"word":"serie","pos":"f.","zh":"系列","unit":"2"},{"word":"sobre","pos":"m.","zh":"信封","unit":"11"},{"word":"sol","pos":"m.","zh":"太阳","unit":"4"},{"word":"té","pos":"m.","zh":"茶","unit":"4"},{"word":"terminal","pos":"f.","zh":"航站楼","unit":"9"},{"word":"tesis","pos":"f.","zh":"论文","unit":"14"},{"word":"timbre","pos":"m.","zh":"铃","unit":"1"},{"word":"trámite","pos":"m.","zh":"手续","unit":"9"},{"word":"tren","pos":"m.","zh":"火车","unit":"1"},{"word":"túnel","pos":"m.","zh":"地道","unit":"3"},{"word":"vagón","pos":"m.","zh":"车厢","unit":"1"},{"word":"valor","pos":"m.","zh":"价值","unit":"2"},{"word":"viernes","pos":"m.","zh":"星期五","unit":"1"},{"word":"violín","pos":"m.","zh":"小提琴","unit":"6"},{"word":"virtud","pos":"f.","zh":"美德，优点","unit":"11"},{"word":"vóleibol","pos":"m.","zh":"排球","unit":"5"},{"word":"wáter","pos":"m.","zh":"抽水马桶；厕所","unit":"12"}],"现西3":[{"word":"arte","pos":"m. (singular) f. (plural)","zh":"艺术","unit":"15"},{"word":"bádminton","pos":"m.","zh":"羽毛球","unit":"11"},{"word":"balcón","pos":"m.","zh":"阳台","unit":"5"},{"word":"ballet","pos":"m.","zh":"芭蕾","unit":"11"},{"word":"base","pos":"f.","zh":"基础","unit":"10"},{"word":"bien","pos":"m.","zh":"善行","unit":"2"},{"word":"boom","pos":"m.(ingl.)","zh":"爆炸","unit":"13"},{"word":"buffet","pos":"m.","zh":"自助餐","unit":"7"},{"word":"caminante","pos":"m.;f.","zh":"行路人","unit":"12"},{"word":"capital","pos":"f.","zh":"首都","unit":"8"},{"word":"carácter","pos":"m.","zh":"特点，性格","unit":"16"},{"word":"carnaval","pos":"m.","zh":"狂欢节","unit":"16"},{"word":"catedral","pos":"f.","zh":"大教堂，主教堂","unit":"10"},{"word":"cereal","pos":"m.","zh":"谷物，粮食","unit":"5"},{"word":"champú","pos":"m.","zh":"香波","unit":"8"},{"word":"chile","pos":"m.","zh":"尖辣椒","unit":"8"},{"word":"chocolate","pos":"m.","zh":"巧克力","unit":"7"},{"word":"choque","pos":"m.","zh":"冲突，撞击","unit":"10"},{"word":"clase","pos":"f.","zh":"阶级","unit":"10"},{"word":"clave","pos":"f.","zh":"答案，谜底","unit":"12"},{"word":"comestible","pos":"adj.;m.","zh":"可食用的；食品","unit":"7"},{"word":"cómplice","pos":"m..f.","zh":"同伙","unit":"2"},{"word":"componente","pos":"m.","zh":"组成部分，成员","unit":"4"},{"word":"contingente","pos":"m.","zh":"组，团队","unit":"12"},{"word":"contraste","pos":"m.","zh":"对比，反差","unit":"5"},{"word":"corriente","pos":"f.","zh":"潮流","unit":"13"},{"word":"creyente","pos":"m.,f.","zh":"信徒","unit":"16"},{"word":"crucifixión","pos":"f.","zh":"钉上十字架","unit":"16"},{"word":"cumbre","pos":"f.","zh":"山顶，顶部","unit":"10"},{"word":"delincuente","pos":"m.,f.","zh":"罪犯","unit":"2"},{"word":"desgaste","pos":"m.","zh":"损耗，消耗","unit":"7"},{"word":"diente","pos":"m.","zh":"牙齿","unit":"8"},{"word":"dirigente","pos":"m.;f.","zh":"领导人","unit":"10"},{"word":"dotes","pos":"f. pl.","zh":"天赋，禀赋","unit":"15"},{"word":"ecuador","pos":"m.","zh":"赤道","unit":"5"},{"word":"emperador, atriz","pos":"m.;f.","zh":"皇帝，皇后","unit":"3"},{"word":"Esfinge","pos":"f.","zh":"狮身人面像","unit":"12"},{"word":"esplendor","pos":"m.","zh":"灿烂，光辉","unit":"8"},{"word":"este","pos":"m.","zh":"东边，东部","unit":"9"},{"word":"estupidez","pos":"f.","zh":"愚蠢的行为或言语","unit":"2"},{"word":"faraón","pos":"m.","zh":"法老","unit":"12"},{"word":"fe","pos":"f.","zh":"信仰","unit":"4"},{"word":"final","pos":"m.","zh":"结束，结尾","unit":"4"},{"word":"fraude","pos":"m.","zh":"营私舞弊","unit":"2"},{"word":"gemelos, las","pos":"m..f.;pl.","zh":"孪生子","unit":"14"},{"word":"general","pos":"m.","zh":"将军","unit":"6"},{"word":"Génesis","pos":"f.","zh":"创世纪","unit":"4"},{"word":"gimnasia con aparatos","pos":"f.","zh":"器械体操","unit":"11"},{"word":"gimnasia sin aparatos","pos":"f.","zh":"自由体操","unit":"11"},{"word":"gobernante","pos":"m.,f.","zh":"统治者","unit":"1"},{"word":"guión","pos":"f.","zh":"脚本","unit":"14"},{"word":"haber","pos":"m.","zh":"资产，财产(账簿上)收入款项栏","unit":"14"},{"word":"hipótesis","pos":"f.","zh":"假设","unit":"8"},{"word":"horror","pos":"m.","zh":"恐怖，害怕","unit":"6"},{"word":"ideal","pos":"adj.;f.","zh":"理想的；理想","unit":"10"},{"word":"imagen","pos":"f.","zh":"造像，表征，形象","unit":"12"},{"word":"interior","pos":"m.","zh":"内部，里面","unit":"2"},{"word":"jabón","pos":"m.","zh":"肥皂","unit":"8"},{"word":"jirón","pos":"m.","zh":"碎布条","unit":"15"},{"word":"latitud","pos":"f.","zh":"纬度","unit":"5"},{"word":"leche","pos":"f.","zh":"奶，乳","unit":"9"},{"word":"legumbre","pos":"f.","zh":"豆科蔬菜；蔬菜","unit":"7"},{"word":"lenguaje","pos":"m.","zh":"语言，语风","unit":"13"},{"word":"levantamiento de pesos","pos":"f.","zh":"举重","unit":"11"},{"word":"ley","pos":"f.","zh":"法律","unit":"3"},{"word":"longitud","pos":"f.","zh":"长度","unit":"12"},{"word":"mal","pos":"m.","zh":"恶行","unit":"2"},{"word":"mar","pos":"m.;f.","zh":"大海，海洋","unit":"6"},{"word":"maratón","pos":"m.","zh":"马拉松","unit":"11"},{"word":"masacre","pos":"f.","zh":"（大规模)屠杀","unit":"3"},{"word":"material","pos":"m.","zh":"材料，资料","unit":"12"},{"word":"menú","pos":"m.","zh":"菜单","unit":"7"},{"word":"mestizaje","pos":"m.","zh":"混血；杂交；融合，混合","unit":"3"},{"word":"metal","pos":"m.","zh":"金属","unit":"3"},{"word":"metrópoli","pos":"f.","zh":"宗主国","unit":"10"},{"word":"monte","pos":"m.","zh":"山","unit":"4"},{"word":"nieve","pos":"f.","zh":"雪","unit":"5"},{"word":"norte","pos":"m.","zh":"北","unit":"5"},{"word":"nubarrón","pos":"m.","zh":"阴云","unit":"5"},{"word":"oeste","pos":"m.","zh":"西边，西部","unit":"9"},{"word":"orden","pos":"f.","zh":"命令","unit":"1"},{"word":"pabellón","pos":"m.","zh":"馆，厅","unit":"11"},{"word":"paraje","pos":"m.","zh":"偏僻的地方","unit":"14"},{"word":"patinaje","pos":"m.","zh":"滑冰","unit":"11"},{"word":"peine","pos":"m.","zh":"梳子","unit":"8"},{"word":"perfil","pos":"m.","zh":"侧影","unit":"12"},{"word":"pincel","pos":"m.","zh":"画笔","unit":"15"},{"word":"ping-pong","pos":"m.","zh":"乒乓球","unit":"11"},{"word":"pirámide","pos":"f.","zh":"金字塔","unit":"8"},{"word":"quebrantar","pos":"m.","zh":"打碎，打破","unit":"2"},{"word":"quietud","pos":"f.","zh":"静止；安静","unit":"9"},{"word":"rebelión","pos":"f.","zh":"叛乱，起义","unit":"3"},{"word":"red","pos":"f.","zh":"网，网络","unit":"8"},{"word":"reflexión","pos":"f.","zh":"思索，思考","unit":"2"},{"word":"resumen","pos":"m.","zh":"内容概述","unit":"14"},{"word":"rincón","pos":"m.","zh":"角落","unit":"8"},{"word":"rival","pos":"m..f.","zh":"对手","unit":"8"},{"word":"sacerdote","pos":"m.","zh":"教士","unit":"10"},{"word":"señal","pos":"f.","zh":"信号","unit":"3"},{"word":"ser","pos":"m.","zh":"人；生物","unit":"2"},{"word":"superficie","pos":"f.","zh":"表面，面积","unit":"5"},{"word":"sur","pos":"m.","zh":"南","unit":"5"},{"word":"surf","pos":"m.","zh":"冲浪","unit":"11"},{"word":"tapiz","pos":"m.","zh":"（课文中指沙发，椅子等）面儿；壁毯","unit":"15"},{"word":"telar","pos":"m.","zh":"织机","unit":"1"},{"word":"temor","pos":"m.","zh":"害怕","unit":"3"},{"word":"templete","pos":"m.","zh":"小庙","unit":"12"},{"word":"tenis","pos":"m.","zh":"网球","unit":"11"},{"word":"tocador","pos":"m.","zh":"梳妆台","unit":"8"},{"word":"tomate","pos":"m.","zh":"西红柿","unit":"7"},{"word":"torre","pos":"f.","zh":"（西方建筑中的）塔楼","unit":"6"},{"word":"traje","pos":"m.","zh":"服装","unit":"1"},{"word":"turrón","pos":"m.","zh":"果仁糖","unit":"16"},{"word":"USB","pos":"m.","zh":"优盘","unit":"12"},{"word":"valle","pos":"m.","zh":"河谷，山谷","unit":"12"},{"word":"valor","pos":"m.","zh":"勇气；价值","unit":"6"},{"word":"vapor","pos":"m.","zh":"蒸汽","unit":"14"},{"word":"variante","pos":"f.","zh":"变体","unit":"13"},{"word":"vigor","pos":"m.","zh":"生气，生机","unit":"11"},{"word":"virrey","pos":"m.","zh":"总督","unit":"10"},{"word":"visitante","pos":"m.;f.","zh":"来访者","unit":"3"}]};
+    const STORE_KEY = "spanish-gender-practice-v1";
+    const LABELS = { m: "阳性 (m.)", f: "阴性 (f.)", unsure: "不确定" };
+    const ARTICLE_LABELS = {
+      m: ["el (m.)"],
+      f: ["la (f.)"],
+      unsure: ["不确定"]
+    };
+    const state = {
+      view: "start",
+      selectedSheet: "现西1",
+      order: "original",
+      quiz: null,
+      selection: new Set()
+    };
+
+    const root = document.getElementById("root");
+
+    function cloneAnswer(answer) {
+      return { m: !!answer.m, f: !!answer.f };
+    }
+
+    function pluralizeSpanish(word) {
+      const trimmed = word.trim();
+      if (!trimmed) return trimmed;
+      const lower = trimmed.toLocaleLowerCase("es");
+      if (/[aeiouáéíóú]$/.test(lower)) return trimmed + "s";
+      if (/[z]$/.test(lower)) return trimmed.slice(0, -1) + "ces";
+      return trimmed + "es";
+    }
+
+    function parseGender(pos, word) {
+      const raw = String(pos || "").trim();
+      if (/m\.\s*\(singular\)\s*f\.\s*\(plural\)/i.test(raw)) {
+        return [
+          { word, answer: { m: true, f: false }, sourcePos: raw },
+          { word: pluralizeSpanish(word), answer: { m: false, f: true }, sourcePos: raw }
+        ];
+      }
+      const withoutParens = raw
+        .replace(/\([^)]*\)/g, "")
+        .replace(/\bpl\.?\b/gi, "")
+        .toLowerCase();
+      return [{
+        word,
+        answer: {
+          m: /m\s*\./.test(withoutParens),
+          f: /f\s*\./.test(withoutParens)
+        },
+        sourcePos: raw
+      }];
+    }
+
+    function questionsForSheet(sheetName) {
+      return RAW_DATA[sheetName].flatMap((row, index) =>
+        parseGender(row.pos, row.word).map((item, splitIndex) => ({
+          id: `${sheetName}-${index}-${splitIndex}-${item.word}`,
+          word: item.word,
+          baseWord: row.word,
+          pos: item.sourcePos,
+          zh: row.zh,
+          unit: row.unit,
+          answer: item.answer
+        }))
+      ).filter(q => q.answer.m || q.answer.f);
+    }
+
+    function shuffle(items) {
+      const out = [...items];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    }
+
+    function serialize() {
+      return JSON.stringify({
+        view: state.view,
+        selectedSheet: state.selectedSheet,
+        order: state.order,
+        quiz: state.quiz,
+        selection: [...state.selection]
+      });
+    }
+
+    function save() {
+      localStorage.setItem(STORE_KEY, serialize());
+    }
+
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+        if (!saved || !RAW_DATA[saved.selectedSheet]) return;
+        state.view = saved.view || "start";
+        state.selectedSheet = saved.selectedSheet || "现西1";
+        state.order = saved.order || "original";
+        state.quiz = saved.quiz || null;
+        state.selection = new Set(saved.selection || []);
+      } catch {
+        localStorage.removeItem(STORE_KEY);
+      }
+    }
+
+    function resetToStart() {
+      state.view = "start";
+      state.quiz = null;
+      state.selection = new Set();
+      save();
+      render();
+    }
+
+    function answerToText(answer) {
+      if (answer.unsure) return LABELS.unsure;
+      const parts = [];
+      if (answer.m) parts.push(LABELS.m);
+      if (answer.f) parts.push(LABELS.f);
+      return parts.length ? parts.join(" + ") : "未选择";
+    }
+
+    function currentQuestion() {
+      if (!state.quiz) return null;
+      return state.quiz.questions[state.quiz.index] || null;
+    }
+
+    function randomItem(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function assignArticleLabels(question) {
+      if (question.articleLabels) return question;
+      return {
+        ...question,
+        articleLabels: {
+          m: randomItem(ARTICLE_LABELS.m),
+          f: randomItem(ARTICLE_LABELS.f),
+          unsure: ARTICLE_LABELS.unsure[0]
+        }
+      };
+    }
+
+    function startQuiz({ questions = null, sheet = state.selectedSheet, order = state.order, redoMode = "all" } = {}) {
+      let base = questions || questionsForSheet(sheet);
+      const list = (order === "random" ? shuffle(base) : [...base]).map(assignArticleLabels);
+      state.view = "quiz";
+      state.selectedSheet = sheet;
+      state.order = order;
+      state.selection = new Set();
+      state.quiz = {
+        sheet,
+        order,
+        redoMode,
+        index: 0,
+        questions: list,
+        results: [],
+        status: "answer"
+      };
+      save();
+      render();
+    }
+
+    function startFromWrong() {
+      const wrongs = (state.quiz?.results || []).filter(r => !r.correct).map(r => r.question);
+      if (!wrongs.length) return;
+      startQuiz({ questions: wrongs, sheet: state.selectedSheet, order: "original", redoMode: "wrong" });
+    }
+
+    function selectAnswer(key) {
+      if (!state.quiz || state.quiz.status !== "answer") return;
+      if (key === "unsure") {
+        state.selection = state.selection.has("unsure") ? new Set() : new Set(["unsure"]);
+      } else {
+        const next = new Set(state.selection);
+        next.delete("unsure");
+        next.has(key) ? next.delete(key) : next.add(key);
+        state.selection = next;
+      }
+      save();
+      render();
+    }
+
+    function isSelectionComplete() {
+      return state.selection.size > 0;
+    }
+
+    function submitAnswer() {
+      if (!state.quiz || state.quiz.status !== "answer" || !isSelectionComplete()) return;
+      const q = currentQuestion();
+      const picked = {
+        m: state.selection.has("m"),
+        f: state.selection.has("f"),
+        unsure: state.selection.has("unsure")
+      };
+      const correct = !picked.unsure && picked.m === q.answer.m && picked.f === q.answer.f;
+      state.quiz.results.push({
+        question: q,
+        picked,
+        correct
+      });
+      state.quiz.status = "feedback";
+      save();
+      render();
+    }
+
+    function nextQuestion() {
+      if (!state.quiz || state.quiz.status !== "feedback") return;
+      state.quiz.index += 1;
+      state.selection = new Set();
+      if (state.quiz.index >= state.quiz.questions.length) {
+        state.view = "summary";
+      } else {
+        state.quiz.status = "answer";
+      }
+      save();
+      render();
+    }
+
+    function renderStart() {
+      const total = questionsForSheet(state.selectedSheet).length;
+      root.innerHTML = `
+        <div class="topline"><span>西班牙语名词</span><span>${total} 题</span></div>
+        <h1>词性判断练习</h1>
+        <p class="lead">选择一本书和出题顺序，开始后只显示西语单词。刷新页面会保留当前进度。</p>
+
+        <div class="option-group">
+          <div class="label">选择 sheet</div>
+          <div class="segmented" role="group" aria-label="选择 sheet">
+            ${Object.keys(RAW_DATA).map(name => `<button class="choice ${state.selectedSheet === name ? "active" : ""}" data-sheet="${name}">${name}</button>`).join("")}
+          </div>
+        </div>
+
+        <div class="option-group">
+          <div class="label">单词顺序</div>
+          <div class="segmented two" role="group" aria-label="选择单词顺序">
+            <button class="choice ${state.order === "original" ? "active" : ""}" data-order="original">原序</button>
+            <button class="choice ${state.order === "random" ? "active" : ""}" data-order="random">随机</button>
+          </div>
+        </div>
+
+        <button class="primary" id="startBtn">开始</button>
+      `;
+      root.querySelectorAll("[data-sheet]").forEach(btn => btn.addEventListener("click", () => {
+        state.selectedSheet = btn.dataset.sheet;
+        save();
+        render();
+      }));
+      root.querySelectorAll("[data-order]").forEach(btn => btn.addEventListener("click", () => {
+        state.order = btn.dataset.order;
+        save();
+        render();
+      }));
+      document.getElementById("startBtn").addEventListener("click", () => startQuiz());
+    }
+
+    function renderQuiz() {
+      let q = currentQuestion();
+      if (!q) {
+        state.view = "summary";
+        save();
+        return renderSummary();
+      }
+      if (!q.articleLabels) {
+        q = assignArticleLabels(q);
+        state.quiz.questions[state.quiz.index] = q;
+        save();
+      }
+      const total = state.quiz.questions.length;
+      const done = state.quiz.index;
+      const percent = Math.round((done / total) * 100);
+      const last = state.quiz.results[state.quiz.results.length - 1];
+      const feedback = state.quiz.status === "feedback" ? (last.correct ? "正确" : `正确答案：${answerToText(q.answer)}`) : "";
+
+      root.innerHTML = `
+        <div class="quiz-head">
+          <div>
+            <div class="topline" style="margin:0"><span>${state.quiz.sheet}</span><span>${state.quiz.order === "random" ? "随机" : "原序"}</span></div>
+            <div class="bar" aria-hidden="true"><span style="width:${percent}%"></span></div>
+          </div>
+          <div class="progress">${done + 1}/${total}</div>
+        </div>
+
+        <div class="word">${escapeHtml(q.word)}</div>
+
+        <div class="answers" role="group" aria-label="选择词性">
+          ${answerButton("m", q, last)}
+          ${answerButton("f", q, last)}
+          ${answerButton("unsure", q, last)}
+        </div>
+        <div class="feedback ${state.quiz.status === "feedback" ? (last.correct ? "ok" : "no") : ""}">${feedback}</div>
+        <button class="primary" id="mainAction" ${state.quiz.status === "answer" && !isSelectionComplete() ? "disabled" : ""}>${state.quiz.status === "feedback" ? "下一题" : "确认"}</button>
+      `;
+
+      root.querySelectorAll("[data-answer]").forEach(btn => {
+        btn.addEventListener("click", () => selectAnswer(btn.dataset.answer));
+      });
+      document.getElementById("mainAction").addEventListener("click", () => {
+        state.quiz.status === "feedback" ? nextQuestion() : submitAnswer();
+      });
+    }
+
+    function answerButton(key, question, result) {
+      const isFeedback = state.quiz.status === "feedback";
+      const selected = state.selection.has(key);
+      const picked = result?.picked || {};
+      let cls = "answer-btn";
+      if (!isFeedback && selected) cls += " selected";
+      if (isFeedback) {
+        if ((key === "m" && question.answer.m) || (key === "f" && question.answer.f)) cls += " correct";
+        if (key === "unsure" && picked.unsure) cls += " wrong";
+        if ((key === "m" && picked.m && !question.answer.m) || (key === "f" && picked.f && !question.answer.f)) cls += " wrong";
+      }
+      const shortcuts = { m: "1", f: "2", unsure: "3" };
+      const label = question.articleLabels?.[key] || LABELS[key];
+      return `<button class="${cls}" data-answer="${key}" ${isFeedback ? "disabled" : ""}>${shortcuts[key]} ${label}</button>`;
+    }
+
+    function renderSummary() {
+      const results = state.quiz?.results || [];
+      const total = results.length;
+      const correctCount = results.filter(r => r.correct).length;
+      const wrongs = results.filter(r => !r.correct);
+      const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
+      root.innerHTML = `
+        <div class="topline"><span>${state.selectedSheet}</span><span>完成</span></div>
+        <h2>练习汇总</h2>
+        <div class="summary-grid">
+          <div class="stat"><strong>${accuracy}%</strong><span>正确率</span></div>
+          <div class="stat"><strong>${correctCount}</strong><span>正确</span></div>
+          <div class="stat"><strong>${wrongs.length}</strong><span>错题</span></div>
+        </div>
+        <div class="label">错题列表</div>
+        ${wrongs.length ? `<div class="wrong-list">${wrongs.map(renderWrong).join("")}</div>` : `<div class="empty">没有错题</div>`}
+        <div class="actions">
+          <button class="secondary" id="redoWrong" ${wrongs.length ? "" : "disabled"}>重做错题</button>
+          <button class="secondary" id="redoSheet">重做整个sheet</button>
+          <button class="secondary" id="changeSheet">换一个sheet</button>
+        </div>
+      `;
+      document.getElementById("redoWrong").addEventListener("click", startFromWrong);
+      document.getElementById("redoSheet").addEventListener("click", () => startQuiz({ sheet: state.selectedSheet, order: state.order }));
+      document.getElementById("changeSheet").addEventListener("click", resetToStart);
+    }
+
+    function renderWrong(result) {
+      return `
+        <div class="wrong-item">
+          <div class="wrong-word">${escapeHtml(result.question.word)}</div>
+          <div class="wrong-meta">
+            <span>你的选择：${answerToText(result.picked)}</span>
+            <span>正确答案：${answerToText(result.question.answer)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[ch]));
+    }
+
+    function render() {
+      if (state.view === "quiz") return renderQuiz();
+      if (state.view === "summary") return renderSummary();
+      return renderStart();
+    }
+
+    window.addEventListener("keydown", (event) => {
+      const shortcutMap = { "1": "m", "2": "f", "3": "unsure" };
+      if (shortcutMap[event.key] && state.view === "quiz" && state.quiz?.status === "answer") {
+        event.preventDefault();
+        return selectAnswer(shortcutMap[event.key]);
+      }
+      if (event.key !== "Enter") return;
+      if (state.view === "start") return startQuiz();
+      if (state.view !== "quiz") return;
+      event.preventDefault();
+      state.quiz.status === "feedback" ? nextQuestion() : submitAnswer();
+    });
+
+    load();
+    render();
+  </script>
+</body>
+</html>
