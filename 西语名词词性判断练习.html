@@ -446,6 +446,31 @@
       return trimmed + "es";
     }
 
+    function cleanDisplayWord(word) {
+      return String(word || "").replace(/\s*\([^)]*\)/g, "").trim();
+    }
+
+    function normalizeQuestion(question) {
+      if (!question) return question;
+      return {
+        ...question,
+        word: cleanDisplayWord(question.word),
+        baseWord: cleanDisplayWord(question.baseWord || question.word)
+      };
+    }
+
+    function normalizeQuiz(quiz) {
+      if (!quiz) return quiz;
+      return {
+        ...quiz,
+        questions: (quiz.questions || []).map(normalizeQuestion),
+        results: (quiz.results || []).map(result => ({
+          ...result,
+          question: normalizeQuestion(result.question)
+        }))
+      };
+    }
+
     function parseGender(pos, word) {
       const raw = String(pos || "").trim();
       if (/m\.\s*\(singular\)\s*f\.\s*\(plural\)/i.test(raw)) {
@@ -472,8 +497,8 @@
       return RAW_DATA[sheetName].flatMap((row, index) =>
         parseGender(row.pos, row.word).map((item, splitIndex) => ({
           id: `${sheetName}-${index}-${splitIndex}-${item.word}`,
-          word: item.word,
-          baseWord: row.word,
+          word: cleanDisplayWord(item.word),
+          baseWord: cleanDisplayWord(row.word),
           pos: item.sourcePos,
           zh: row.zh,
           unit: row.unit,
@@ -519,8 +544,10 @@
         state.view = saved.view || "start";
         state.selectedSheet = saved.selectedSheet || "现西1";
         state.order = saved.order || "original";
-        state.quiz = saved.quiz || null;
-        state.sessions = saved.sessions || {};
+        state.quiz = normalizeQuiz(saved.quiz || null);
+        state.sessions = Object.fromEntries(
+          Object.entries(saved.sessions || {}).map(([sheet, quiz]) => [sheet, normalizeQuiz(quiz)])
+        );
         if (state.quiz?.sheet && state.quiz.redoMode === "all") {
           state.sessions[state.quiz.sheet] = state.quiz;
         }
